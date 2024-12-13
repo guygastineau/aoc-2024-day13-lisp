@@ -1,5 +1,8 @@
 (defvar *BUTTON-A-COST* 3)
 (defvar *BUTTON-B-COST* 1)
+;; Weird condition in the second part of the test require adding 10000000000000 to both axis of the prize.
+(defvar *PRIZE-X-OFFSET* 10000000000000)
+(defvar *PRIZE-Y-OFFSET* 10000000000000)
 
 (defstruct vec
   x y)
@@ -64,7 +67,8 @@
       (setf (vec-y prize) (read*))
       ;; That was gross!
       (if (and (vec-initp button-a) (vec-initp button-b) (vec-initp prize))
-          `((a . ,button-a) (b . ,button-b) (prize . ,prize))
+          `((a . ,button-a) (b . ,button-b) (prize . ,(make-vec :x (+ (vec-x prize) *PRIZE-X-OFFSET*)
+                                                                :y (+ (vec-y prize) *PRIZE-Y-OFFSET*))))
           nil))
     ))
 
