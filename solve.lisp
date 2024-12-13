@@ -31,14 +31,6 @@
           (if (and (integerp a) (integerp b)) (make-solution :a a :b b)
               (make-solution :a 0 :b 0))))))
 
-;; Read until c is encountered setting the new stream position to just after c.
-(defun read-through (c in)
-  (loop for d = (read-char in nil nil)
-        until (or (null d) (eq c d))))
-
-(defun vec-initp (v)
-  (and (vec-x v) (vec-y v)))
-
 ;; HERE is the format of our input data:
 ;;
 ;; Button A: X+55, Y+84
@@ -46,29 +38,29 @@
 ;; Prize: X=6049, Y=5045
 ;;
 ;; What a horrible format. Who ever thought this was a good idea?  I hope they choke on worms.
-;; Anyway, let's think up a good way to parse it.  We'll go ahead and assume that all records are complete.
-;; It's the least we can do for ourselves given how horrible this format is.
+;; Anyway, let's think up a good way to parse it.
 (defun parse-machine (in)
   (let ((button-a (make-vec))
         (button-b (make-vec))
         (prize (make-vec)))
-    (flet ((read* () (read in nil nil)))
-      (read-through #\+ in)
-      (setf (vec-x button-a) (read*))
-      (read-through #\+ in)
-      (setf (vec-y button-a) (read*))
-      (read-through #\+ in)
-      (setf (vec-x button-b) (read*))
-      (read-through #\+ in)
-      (setf (vec-y button-b) (read*))
-      (read-through #\= in)
-      (setf (vec-x prize) (read*))
-      (read-through #\= in)
-      (setf (vec-y prize) (read*))
-      ;; That was gross!
+    (macrolet ((setf-to-read-after-char (c to &rest ctos)
+                 `(progn (loop for d = (read-char in nil nil)
+                               until (or (null d) (eq ,c d)))
+                         (setf ,to (read in nil nil))
+                         ,(if (null ctos) nil
+                              `(setf-to-read-after-char ,@ctos))))
+               (vec-initp (v)
+                 `(and (vec-x ,v) (vec-y ,v))))
+      (setf-to-read-after-char #\+ (vec-x button-a)
+                               #\+ (vec-y button-a)
+                               #\+ (vec-x button-b)
+                               #\+ (vec-y button-b)
+                               #\= (vec-x prize)
+                               #\= (vec-y prize))
       (if (and (vec-initp button-a) (vec-initp button-b) (vec-initp prize))
-          `((a . ,button-a) (b . ,button-b) (prize . ,(make-vec :x (+ (vec-x prize) *PRIZE-X-OFFSET*)
-                                                                :y (+ (vec-y prize) *PRIZE-Y-OFFSET*))))
+          `((a . ,button-a)
+            (b . ,button-b)
+            (prize . ,(make-vec :x (+ (vec-x prize) *PRIZE-X-OFFSET*) :y (+ (vec-y prize) *PRIZE-Y-OFFSET*))))
           nil))
     ))
 
